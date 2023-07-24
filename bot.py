@@ -120,19 +120,23 @@ logging.basicConfig(level=logging.INFO)
 async def before_serving():
     loop = asyncio.get_event_loop()
 
+    intents = discord.Intents.all()
+    intents.message_content = True
+
     bot = commands.Bot(command_prefix=commands.when_mentioned_or("."),
                        description='Stream bot',
-                       help_command=None)
+                       help_command=None,
+                       intents=intents)
     @bot.event
     async def on_ready():
         print('Logged in as {0} ({0.id})'.format(bot.user))
         print('------')
         await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.listening, name="you"))
         twitch_auth()
-    bot.add_cog(Commands(bot))
+    await bot.add_cog(Commands(bot))
 
     app.bot = bot
-    await bot.login(token)
+    await bot.start(token)
 
     loop.create_task(bot.connect())
 
@@ -155,9 +159,9 @@ async def send_message():
         if notify_type == "stream.online":
             user = event["broadcaster_user_name"]
             user_url = "https://twitch.tv/"+event["broadcaster_user_login"]
-            await channel.send(f"{user} is streaming! Watch him at {user_url}")
+            await channel.send(f"{user} is streaming! Watch at {user_url}")
         elif notify_type == "stream.offline":
-            user = event["broadcaster_user_name"]
+            user = event["broadcaster_user_login"]
             for message in await channel.history().flatten():
                 if f"twitch.tv/{user}" in message.content:
                     await message.delete()
