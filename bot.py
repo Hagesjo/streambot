@@ -136,7 +136,7 @@ async def before_serving():
     await bot.add_cog(Commands(bot))
 
     app.bot = bot
-    await bot.start(token)
+    await bot.login(token)
 
     loop.create_task(bot.connect())
 
@@ -162,7 +162,7 @@ async def send_message():
             await channel.send(f"{user} is streaming! Watch at {user_url}")
         elif notify_type == "stream.offline":
             user = event["broadcaster_user_login"]
-            for message in await channel.history().flatten():
+            async for message in channel.history():
                 if f"twitch.tv/{user}" in message.content:
                     await message.delete()
         elif notify_type == "channel.follow":
